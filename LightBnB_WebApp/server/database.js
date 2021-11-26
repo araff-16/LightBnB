@@ -1,24 +1,6 @@
 const properties = require('./json/properties.json');
 const users = require('./json/users.json');
-
-
-const { Pool } = require('pg');
-
-//specifyin connection options
-const pool = new Pool({
-  user: 'vagrant',
-  password: '123',
-  host: 'localhost',
-  database: 'lightbnb'
-});
-
-//checks to see if we connected ot database
-pool.connect().then(() => {
-  console.log("Connection to database established");
-}).catch (e => {
-  console.log('************ERROR************');
-  console.log(e.message)
-})
+const db = require('../db')
 
 /// Users
 
@@ -29,7 +11,7 @@ pool.connect().then(() => {
  */
 const getUserWithEmail = function(email) {
   
-  return pool.query(`
+  return db.query(`
   SELECT *
   FROM users
   WHERE email = $1`, [email])
@@ -46,7 +28,7 @@ exports.getUserWithEmail = getUserWithEmail;
  */
 const getUserWithId = function(id) {
 
-  return pool.query(`
+  return db.query(`
   SELECT *
   FROM users
   WHERE id = $1`, [id])
@@ -63,7 +45,7 @@ exports.getUserWithId = getUserWithId;
  */
 const addUser =  function(user) {
   
-  return pool.query(`
+  return db.query(`
   INSERT INTO users (name, email, password) 
   VALUES ($1, $2, $3) RETURNING *`, [user.name, user.email, user.password])
   .then(res => res.rows[0]) 
@@ -79,7 +61,7 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return pool.query(`
+  return db.query(`
   SELECT * FROM properties
   JOIN reservations ON reservations.property_id = properties.id
   WHERE guest_id  = $1
@@ -157,7 +139,7 @@ const getAllProperties = function(options, limit = 10) {
 
 
   // 6
-  return pool.query(queryString, queryParams).then((res) => res.rows);
+  return db.query(queryString, queryParams).then((res) => res.rows);
 
 }
 exports.getAllProperties = getAllProperties;
@@ -208,7 +190,7 @@ const addProperty = function(property) {
     property.post_code
   ]
 
-  return pool.query(queryString, values)
+  return db.query(queryString, values)
   .then(res => res.rows) 
   .catch(err => {
     console.log(err.message)
